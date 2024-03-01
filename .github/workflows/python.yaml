@@ -35,7 +35,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+          poetry add PyYAML
           poetry install
+          poetry add PyYAML
           pip install pyyaml
 
       - name: Run tests and collect coverage
