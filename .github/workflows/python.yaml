@@ -36,6 +36,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install
+          pip install pyyaml
 
       - name: Run tests and collect coverage
         run: |
@@ -61,6 +62,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install
+          pip install pyyaml
 
       - name: Check code formatting with Ruff
         run: poetry run ruff format --check .
