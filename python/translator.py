@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-"""Транслятор в машинный код.
-
-"""
+"""Транслятор в машинный код."""
 
 import shlex
 import sys
@@ -48,7 +46,7 @@ def remove_comment(line):
     comment_position = line.find(";")
     if comment_position == -1:
         return line
-    return line[0: comment_position]
+    return line[0:comment_position]
 
 
 def convert_to_int_if_int(string):
@@ -59,7 +57,7 @@ def convert_to_int_if_int(string):
 
 
 def process_label(line):
-    if re.fullmatch('[a-z]+:', line[0]):
+    if re.fullmatch("[a-z]+:", line[0]):
         if line[0] in register_code_by_name:
             raise Exception("label == reg name")  # label == reg name
         label_mapping[line[0][0:-1]] = len(memory)
@@ -69,8 +67,8 @@ def process_label(line):
 
 
 def is_indirect(arg):
-    return arg[0] == "[" and arg[-1] == "]" \
-           #or arg not in register_code_by_name and type(convert_to_int_if_int(arg)) is not int
+    return arg[0] == "[" and arg[-1] == "]"
+    # or arg not in register_code_by_name and type(convert_to_int_if_int(arg)) is not int
 
 
 def extract_from_brackets(arg):
@@ -88,16 +86,24 @@ def place_instruction(line):
             no_arg_flags.append("io")
             if line[0] == "in":
                 no_arg_flags.append("in")
-        memory.append({"word_number": len(memory),
-                       "type": "noArg", "opcode": symbol2opcode(line[0]), "flags": no_arg_flags})
+        memory.append(
+            {"word_number": len(memory), "type": "noArg", "opcode": symbol2opcode(line[0]), "flags": no_arg_flags}
+        )
     elif line[0] in branching_instructions:
         if len(line) != 2:
             raise Exception("arity in a branching instruction")  # Arity
         branch_flags = ["branch"]
         if line[0] == "jmp":
             branch_flags.append("jmp")
-        memory.append({"word_number": len(memory),
-                       "type": "branch", "opcode": symbol2opcode(line[0]), "flags": branch_flags, "address": line[1]})
+        memory.append(
+            {
+                "word_number": len(memory),
+                "type": "branch",
+                "opcode": symbol2opcode(line[0]),
+                "flags": branch_flags,
+                "address": line[1],
+            }
+        )
     elif line[0] in two_arg_instructions:
         if len(line) != 3:
             raise Exception("arity in a two arg instruction")  # Arity
@@ -113,8 +119,12 @@ def place_instruction(line):
             raise Exception("add 1, smth")  # add 1, smth
 
         two_arg_flags = ["twoArg"]
-        command = {"word_number": len(memory),
-                   "type": "twoArg", "opcode": symbol2opcode(line[0]), "flags": two_arg_flags}
+        command = {
+            "word_number": len(memory),
+            "type": "twoArg",
+            "opcode": symbol2opcode(line[0]),
+            "flags": two_arg_flags,
+        }
         memory.append(command)
         if dest_indirect:
             two_arg_flags.append("dest_indirect")
@@ -183,10 +193,12 @@ def place_data(line):
 def translate(text):
     global memory
 
-    valid_lines = list(map(lambda line: shlex.split(line, posix=False),
-                           filter(lambda line: len(line) > 0,
-                                  map(lambda line: remove_comment(line).strip(),
-                                      text.split("\n")))))
+    valid_lines = list(
+        map(
+            lambda line: shlex.split(line, posix=False),
+            filter(lambda line: len(line) > 0, map(lambda line: remove_comment(line).strip(), text.split("\n"))),
+        )
+    )
 
     valid_lines.append(["hlt"])
 
@@ -204,9 +216,9 @@ def translate(text):
     for word in memory:
         for keyword in {"value", "address"}:
             if keyword in word and type(word[keyword]) is str:
-                #if word[keyword] in register_code_by_name:
-                    #word[keyword] = register_code_by_name[word[keyword]]
-                    #continue
+                # if word[keyword] in register_code_by_name:
+                # word[keyword] = register_code_by_name[word[keyword]]
+                # continue
                 if word[keyword] not in label_mapping and word[keyword] not in register_code_by_name:
                     raise Exception("undeclared label", word[keyword])
                 if word[keyword] not in register_code_by_name:

@@ -9,12 +9,12 @@ import machine
 import pytest
 import translator
 
-golden_dir = os.path.join(os.path.dirname(__file__), 'golden')
+golden_dir = os.path.join(os.path.dirname(__file__), "golden")
 filenames = [i for i in os.listdir(golden_dir)]
 
 
 def literal_presenter(dumper, data):
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
 
 
 @pytest.mark.parametrize("filename", filenames)
@@ -23,7 +23,7 @@ def test_translator_asm_and_machine(filename, caplog):
 
     caplog.set_level(logging.DEBUG)
 
-    with open(os.path.join('golden', filename)) as f:
+    with open(os.path.join("golden", filename)) as f:
         golden = yaml.safe_load(f)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -44,11 +44,11 @@ def test_translator_asm_and_machine(filename, caplog):
         with open(target, encoding="utf-8") as file:
             code = file.read()
 
-        if os.getenv('UPDATE_GOLDEN') is not None and os.getenv('UPDATE_GOLDEN') == "true":
+        if os.getenv("UPDATE_GOLDEN") is not None and os.getenv("UPDATE_GOLDEN") == "true":
             golden["out_code"] = code
             golden["out_stdout"] = stdout.getvalue()
             golden["out_log"] = caplog.text
-            with open(os.path.join('golden', filename), 'w') as f:
+            with open(os.path.join("golden", filename), "w") as f:
                 yaml.dump(golden, f)
         else:
             assert code == golden["out_code"]
