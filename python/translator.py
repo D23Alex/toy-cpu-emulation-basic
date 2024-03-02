@@ -115,7 +115,7 @@ def place_instruction(line):
         dest_is_register, arg_is_register = dest in register_code_by_name, arg in register_code_by_name
         dest, arg = convert_to_int_if_int(dest), convert_to_int_if_int(arg)
 
-        if not is_indirect(dest) and type(dest) is int:
+        if not is_indirect(dest) and isinstance(dest, int):
             raise Exception("add 1, smth")  # add 1, smth
 
         two_arg_flags = ["twoArg"]
@@ -179,10 +179,10 @@ def place_data(line):
     if len(line) == 0:
         raise Exception("no data")  # нет данных
     for term in line:
-        if term[0] == "w" and type(convert_to_int_if_int(term[1:])) is int:
+        if term[0] == "w" and isinstance(convert_to_int_if_int(term[1:]), int):
             for i in range(convert_to_int_if_int(term[1:])):
                 place_int(0)
-        elif type(convert_to_int_if_int(term)) is int:
+        elif isinstance(convert_to_int_if_int(term), int):
             place_int(convert_to_int_if_int(term))
         elif term[0] == "'" and term[-1] == "'":
             place_string(term[1:-1])
@@ -215,7 +215,7 @@ def translate(text):
 
     for word in memory:
         for keyword in {"value", "address"}:
-            if keyword in word and type(word[keyword]) is str:
+            if keyword in word and isinstance(word[keyword], str):
                 # if word[keyword] in register_code_by_name:
                 # word[keyword] = register_code_by_name[word[keyword]]
                 # continue

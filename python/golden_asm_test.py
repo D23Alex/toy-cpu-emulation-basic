@@ -1,4 +1,3 @@
-import yaml
 import contextlib
 import io
 import logging
@@ -8,6 +7,7 @@ import tempfile
 import machine
 import pytest
 import translator
+import yaml
 
 golden_dir = os.path.join(os.path.dirname(__file__), "golden")
 filenames = [i for i in os.listdir(golden_dir)]

@@ -4,7 +4,8 @@ import logging
 import sys
 
 from isa import read_code
-from micro import *
+from micro import Signals
+from micro import Micro
 
 
 class DataPath:
@@ -135,7 +136,7 @@ class DataPath:
             alu_right = self.ab
 
         # АЛУ - вычисление результата will throw exception if command +/- non zero number
-        if type(alu_right) is not int and alu_left == 0:
+        if not isinstance(alu_right, int) and alu_left == 0:
             res = alu_right.copy()
             if "value" in res:  # превращаем {"value": 123} в 123
                 res = res["value"]
@@ -153,13 +154,13 @@ class DataPath:
 
         # Запись в регистры
         if Signals.ARWR in signals:
-            if type(res) is int:
+            if isinstance(res, int):
                 self.ar = res % (2**self.address_size)
             else:
                 self.ar = res["address"]
 
         if Signals.IPWR in signals:
-            if type(res) is int:
+            if isinstance(res, int):
                 self.ip = res % (2**self.address_size)
             else:
                 self.ip = res["address"]
@@ -177,14 +178,14 @@ class DataPath:
         # Работа с памятью
         if Signals.DRWR in signals:
             if Signals.MEMRD in signals:
-                if type(memory[self.ar]) is int:
+                if isinstance(memory[self.ar], int):
                     self.dr = memory[self.ar]
                 else:
                     self.dr = memory[self.ar].copy()
             else:
                 self.dr = res
         if Signals.MEMWR in signals:
-            if type(self.dr) is int:
+            if isinstance(self.dr, int):
                 memory[self.ar] = self.dr
             else:
                 memory[self.ar] = self.dr.copy()
