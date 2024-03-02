@@ -74,7 +74,7 @@ def extract_from_brackets(arg):
 def place_instruction(line):
     if line[0] in no_arg_instructions:
         if len(line) > 1:
-            raise TranslatorException("arity in a no arg instruction")
+            raise TranslatorException("arity")
         no_arg_flags = ["noArg"]
         if line[0] != "hlt":
             no_arg_flags.append("io")
@@ -85,7 +85,7 @@ def place_instruction(line):
         )
     elif line[0] in branching_instructions:
         if len(line) != 2:
-            raise TranslatorException("arity in a branching instruction")
+            raise TranslatorException("arity ")
         branch_flags = ["branch"]
         if line[0] == "jmp":
             branch_flags.append("jmp")
@@ -100,7 +100,7 @@ def place_instruction(line):
         )
     elif line[0] in two_arg_instructions:
         if len(line) != 3:
-            raise TranslatorException("arity in a two arg instruction")
+            raise TranslatorException("arity")
 
         dest, arg = line[1], line[2]
         dest_indirect = is_indirect(dest)
@@ -110,7 +110,7 @@ def place_instruction(line):
         dest, arg = convert_to_int_if_int(dest), convert_to_int_if_int(arg)
 
         if not is_indirect(dest) and isinstance(dest, int):
-            raise TranslatorException("add 1, smth")
+            raise TranslatorException("dest-direct-number")
 
         two_arg_flags = ["twoArg"]
         command = {
@@ -151,7 +151,7 @@ def place_instruction(line):
 
 def place_int(n):
     if n > 2147483647 or n < -2147483648:
-        raise TranslatorException("int oub")
+        raise TranslatorException("int-oub")
     memory.append({"value": n})
 
 
@@ -171,7 +171,7 @@ def place_string(string):
 
 def place_data(line):
     if len(line) == 0:
-        raise TranslatorException("no data")
+        raise TranslatorException("no-data")
     for term in line:
         if term[0] == "w" and isinstance(convert_to_int_if_int(term[1:]), int):
             for i in range(convert_to_int_if_int(term[1:])):
@@ -181,7 +181,7 @@ def place_data(line):
         elif term[0] == "'" and term[-1] == "'":
             place_string(term[1:-1])
         else:
-            raise TranslatorException("some wrong with data")
+            raise TranslatorException("bad-data")
 
 
 def translate(text):
@@ -206,7 +206,7 @@ def translate(text):
         if is_instruction:
             place_instruction(line)
         elif not starts_with_label:
-            raise TranslatorException("data without label")  # ошибка - данные без метки
+            raise TranslatorException("no-label")  # ошибка - данные без метки
         else:
             place_data(line)
 
@@ -214,7 +214,7 @@ def translate(text):
         for keyword in {"value", "address"}:
             if keyword in word and isinstance(word[keyword], str):
                 if word[keyword] not in label_mapping and word[keyword] not in registers:
-                    raise TranslatorException("undeclared label", word[keyword])
+                    raise TranslatorException("undeclared-label", word[keyword])
                 if word[keyword] not in registers:
                     word[keyword] = label_mapping[word[keyword]]
     return memory
