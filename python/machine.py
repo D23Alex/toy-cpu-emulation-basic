@@ -9,7 +9,7 @@ from micro import Micro, Signals
 
 class DataPath:
     """
-        reg_wr (decoder)◄──────────────────────────────────┐   *arg_reg
+    reg_wr (decoder)◄──────────────────────────────────┐   *arg_reg
        │   │             │                             │    ▲
        ▼   ▼             └──────────►┌────┐            │    │  ┌───────────────────────────────────────────────────┐
     ┌───────┐                        │    │            │    │  │                                                   │
@@ -96,7 +96,7 @@ class DataPath:
         if Signals.OUT in signals:
             self.d &= 0xFFFFFFFF
             high_byte = (self.d >> 24) & 0xFF
-            if high_byte > 126:
+            if high_byte > 126 or (high_byte < 32 and high_byte != 10):
                 high_byte_char = "\\x{:02x}".format(high_byte)
             else:
                 high_byte_char = chr(high_byte)
@@ -148,7 +148,7 @@ class DataPath:
             if Signals.SETZ in signals:
                 self.zero = res == 0
 
-        if Signals.SHB in signals:
+        if isinstance(res, int) and Signals.SHB in signals:
             res = res << 8
 
         # Запись в регистры

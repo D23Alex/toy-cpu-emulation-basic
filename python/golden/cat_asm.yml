@@ -1,4 +1,4 @@
-"in_source": |-
+in_source: |-
   start: in
     shb d d
     shb d d
@@ -8,9 +8,9 @@
     out
     jmp start
   end: hlt
-"in_stdin": |-
+in_stdin: |-
   foo
-"out_code": |-
+out_code: |-
   [{"word_number": 0, "opcode": "jmp", "flags": ["branch", "jmp"], "address": 1},
    {"word_number": 1, "type": "noArg", "opcode": "in", "flags": ["noArg", "io", "in"]},
    {"word_number": 2, "type": "twoArg", "opcode": "shb", "flags": ["twoArg", "dest_is_register", "arg_is_register", "shb"], "dest_reg": "d", "arg_reg": "d"},
@@ -23,7 +23,7 @@
    {"word_number": 9, "type": "branch", "opcode": "jmp", "flags": ["branch", "jmp"], "address": 1},
    {"word_number": 10, "type": "noArg", "opcode": "hlt", "flags": ["noArg"]},
    {"word_number": 11, "type": "noArg", "opcode": "hlt", "flags": ["noArg"]}]
-"out_log": |
+out_log: |
   INFO    machine:simulation    TICK: 1 IP: 0 DR: 0 CR: 0 ARG_BUF: 0 a: 0 b: 0 c: 0 d: 0 DST_BUF: 0 AR: 0
   INFO    machine:simulation    TICK: 2 IP: 1 DR: {'word_number': 0, 'opcode': 'jmp', 'flags': ['branch', 'jmp'], 'address': 1} CR: 0 ARG_BUF: 0 a: 0 b: 0 c: 0 d: 0 DST_BUF: 0 AR: 0
   INFO    machine:simulation    TICK: 3 IP: 1 DR: {'word_number': 0, 'opcode': 'jmp', 'flags': ['branch', 'jmp'], 'address': 1} CR: {'word_number': 0, 'opcode': 'jmp', 'flags': ['branch', 'jmp'], 'address': 1} ARG_BUF: 0 a: 0 b: 0 c: 0 d: 0 DST_BUF: 0 AR: 0
@@ -462,7 +462,7 @@
   INFO    machine:simulation    TICK: 429 IP: 11 DR: {'word_number': 10, 'type': 'noArg', 'opcode': 'hlt', 'flags': ['noArg']} CR: {'word_number': 10, 'type': 'noArg', 'opcode': 'hlt', 'flags': ['noArg']} ARG_BUF: 0 a: 0 b: 0 c: 0 d: 0 DST_BUF: 0 AR: 10
   INFO    machine:simulation    TICK: 430 IP: 11 DR: {'word_number': 10, 'type': 'noArg', 'opcode': 'hlt', 'flags': ['noArg']} CR: {'word_number': 10, 'type': 'noArg', 'opcode': 'hlt', 'flags': ['noArg']} ARG_BUF: 0 a: 0 b: 0 c: 0 d: 0 DST_BUF: 0 AR: 10
   INFO    machine:simulation    output_buffer: 'foo'
-"out_stdout": |
+out_stdout: |
   source LoC: 9 machine words: 12
   ============================================================
   foo

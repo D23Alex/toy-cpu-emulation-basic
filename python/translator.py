@@ -186,6 +186,9 @@ def place_data(line):
 
 def translate(text):
     global memory
+    global label_mapping
+    memory = []
+    label_mapping = {}
 
     valid_lines = list(
         map(
