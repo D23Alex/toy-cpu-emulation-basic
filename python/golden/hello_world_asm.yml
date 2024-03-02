@@ -2017,4 +2017,4 @@ out_stdout: |
   source LoC: 18 machine words: 32
   ============================================================
   hello world
-  instr_counter:  0 ticks: 1948
+  instr_counter:  130 ticks: 1948

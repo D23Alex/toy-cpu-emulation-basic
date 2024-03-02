@@ -7024,4 +7024,4 @@ out_stdout: |
   What is your name?
   foo
   Hello, foo!
-  instr_counter:  0 ticks: 6693
+  instr_counter:  436 ticks: 6693
