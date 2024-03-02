@@ -19,7 +19,7 @@ registers = {"a", "b", "c", "d"}
 start_label = "start"
 
 
-class TranslatorException(Exception):
+class TranslatorError(Exception):
     pass
 
 
@@ -54,7 +54,7 @@ def convert_to_int_if_int(string):
 def process_label(line):
     if re.fullmatch("[a-z]+:", line[0]):
         if line[0] in registers:
-            raise TranslatorException("label == reg name")  # label == reg name
+            raise TranslatorError("label-is-reg-name")
         label_mapping[line[0][0:-1]] = len(memory)
         line.pop(0)
         return True
@@ -71,87 +71,99 @@ def extract_from_brackets(arg):
     return arg
 
 
+def place_no_arg_instruction(line):
+    if len(line) > 1:
+        raise TranslatorError("arity")
+    no_arg_flags = ["noArg"]
+    if line[0] != "hlt":
+        no_arg_flags.append("io")
+        if line[0] == "in":
+            no_arg_flags.append("in")
+    memory.append(
+        {"word_number": len(memory), "type": "noArg", "opcode": symbol2opcode(line[0]), "flags": no_arg_flags}
+    )
+
+
+def place_branching_instruction(line):
+    if len(line) != 2:
+        raise TranslatorError("arity")
+    branch_flags = ["branch"]
+    if line[0] == "jmp":
+        branch_flags.append("jmp")
+    memory.append(
+        {
+            "word_number": len(memory),
+            "type": "branch",
+            "opcode": symbol2opcode(line[0]),
+            "flags": branch_flags,
+            "address": line[1],
+        }
+    )
+
+
+def place_two_arg_instruction(line):
+    if len(line) != 3:
+        raise TranslatorError("arity")
+
+    dest, arg = line[1], line[2]
+    dest_indirect = is_indirect(dest)
+    arg_indirect = is_indirect(arg)
+    dest, arg = extract_from_brackets(dest), extract_from_brackets(arg)
+    dest_is_register, arg_is_register = dest in registers, arg in registers
+    dest, arg = convert_to_int_if_int(dest), convert_to_int_if_int(arg)
+
+    if not is_indirect(dest) and isinstance(dest, int):
+        raise TranslatorError("dest-direct-number")
+
+    two_arg_flags = ["twoArg"]
+    command = {
+        "word_number": len(memory),
+        "type": "twoArg",
+        "opcode": symbol2opcode(line[0]),
+        "flags": two_arg_flags,
+    }
+    memory.append(command)
+    if dest_indirect:
+        two_arg_flags.append("dest_indirect")
+    if arg_indirect:
+        two_arg_flags.append("arg_indirect")
+
+    if dest_is_register:
+        two_arg_flags.append("dest_is_register")
+        command["dest_reg"] = dest
+    else:
+        command["address"] = dest
+
+    if arg_is_register:
+        two_arg_flags.append("arg_is_register")
+        command["arg_reg"] = arg
+    elif arg_indirect:
+        memory.append({"address": arg})
+    else:
+        memory.append({"value": arg})
+
+    if line[0] == "add" or line[0] == "cmp":
+        two_arg_flags.append("add_or_cmp")
+    if line[0] == "shb":
+        two_arg_flags.append("shb")
+    if line[0] == "cmp":
+        two_arg_flags.append("cmp")
+
+
 def place_instruction(line):
     if line[0] in no_arg_instructions:
-        if len(line) > 1:
-            raise TranslatorException("arity")
-        no_arg_flags = ["noArg"]
-        if line[0] != "hlt":
-            no_arg_flags.append("io")
-            if line[0] == "in":
-                no_arg_flags.append("in")
-        memory.append(
-            {"word_number": len(memory), "type": "noArg", "opcode": symbol2opcode(line[0]), "flags": no_arg_flags}
-        )
+        place_no_arg_instruction(line)
     elif line[0] in branching_instructions:
-        if len(line) != 2:
-            raise TranslatorException("arity ")
-        branch_flags = ["branch"]
-        if line[0] == "jmp":
-            branch_flags.append("jmp")
-        memory.append(
-            {
-                "word_number": len(memory),
-                "type": "branch",
-                "opcode": symbol2opcode(line[0]),
-                "flags": branch_flags,
-                "address": line[1],
-            }
-        )
+        place_branching_instruction(line)
     elif line[0] in two_arg_instructions:
-        if len(line) != 3:
-            raise TranslatorException("arity")
-
-        dest, arg = line[1], line[2]
-        dest_indirect = is_indirect(dest)
-        arg_indirect = is_indirect(arg)
-        dest, arg = extract_from_brackets(dest), extract_from_brackets(arg)
-        dest_is_register, arg_is_register = dest in registers, arg in registers
-        dest, arg = convert_to_int_if_int(dest), convert_to_int_if_int(arg)
-
-        if not is_indirect(dest) and isinstance(dest, int):
-            raise TranslatorException("dest-direct-number")
-
-        two_arg_flags = ["twoArg"]
-        command = {
-            "word_number": len(memory),
-            "type": "twoArg",
-            "opcode": symbol2opcode(line[0]),
-            "flags": two_arg_flags,
-        }
-        memory.append(command)
-        if dest_indirect:
-            two_arg_flags.append("dest_indirect")
-        if arg_indirect:
-            two_arg_flags.append("arg_indirect")
-
-        if dest_is_register:
-            two_arg_flags.append("dest_is_register")
-            command["dest_reg"] = dest
-        else:
-            command["address"] = dest
-
-        if arg_is_register:
-            two_arg_flags.append("arg_is_register")
-            command["arg_reg"] = arg
-        elif arg_indirect:
-            memory.append({"address": arg})
-        else:
-            memory.append({"value": arg})
-
-        if line[0] == "add" or line[0] == "cmp":
-            two_arg_flags.append("add_or_cmp")
-        if line[0] == "shb":
-            two_arg_flags.append("shb")
-        if line[0] == "cmp":
-            two_arg_flags.append("cmp")
+        place_two_arg_instruction(line)
     else:
-        raise TranslatorException("unknown")
+        raise TranslatorError("unknown-command")
 
 
 def place_int(n):
     if n > 2147483647 or n < -2147483648:
-        raise TranslatorException("int-oub")
+        raise TranslatorError("int-oub")
     memory.append({"value": n})
 
 
@@ -171,7 +183,7 @@ def place_string(string):
 
 def place_data(line):
     if len(line) == 0:
-        raise TranslatorException("no-data")
+        raise TranslatorError("no-data")
     for term in line:
         if term[0] == "w" and isinstance(convert_to_int_if_int(term[1:]), int):
             for i in range(convert_to_int_if_int(term[1:])):
@@ -181,7 +193,7 @@ def place_data(line):
         elif term[0] == "'" and term[-1] == "'":
             place_string(term[1:-1])
         else:
-            raise TranslatorException("bad-data")
+            raise TranslatorError("bad-data")
 
 
 def translate(text):
@@ -206,7 +218,7 @@ def translate(text):
         if is_instruction:
             place_instruction(line)
         elif not starts_with_label:
-            raise TranslatorException("no-label")  # ошибка - данные без метки
+            raise TranslatorError("no-label")  # ошибка - данные без метки
         else:
             place_data(line)
 
@@ -214,7 +226,7 @@ def translate(text):
         for keyword in {"value", "address"}:
             if keyword in word and isinstance(word[keyword], str):
                 if word[keyword] not in label_mapping and word[keyword] not in registers:
-                    raise TranslatorException("undeclared-label", word[keyword])
+                    raise TranslatorError("undeclared-label", word[keyword])
                 if word[keyword] not in registers:
                     word[keyword] = label_mapping[word[keyword]]
     return memory

@@ -7,6 +7,10 @@ from isa import read_code
 from micro import Micro, Signals
 
 
+class DataPathError(Exception):
+    pass
+
+
 class DataPath:
     """
     reg_wr (decoder)◄──────────────────────────────────┐   *arg_reg
@@ -77,7 +81,7 @@ class DataPath:
             return self.c
         if reg == "d":
             return self.d
-        raise Exception
+        raise DataPathError
 
     def write_reg(self, reg, val):
         if reg == "a":
@@ -89,10 +93,9 @@ class DataPath:
         elif reg == "d":
             self.d = val
         else:
-            raise Exception
+            raise DataPathError
 
-    def simulate_tick(self, memory, signals):
-        # IO
+    def do_io(self, signals):
         if Signals.OUT in signals:
             self.d &= 0xFFFFFFFF
             high_byte = (self.d >> 24) & 0xFF
@@ -112,6 +115,7 @@ class DataPath:
             self.d = symbol_code  # read to low byte
             logging.debug("input: %s", repr(chr(symbol_code)))
 
+    def read_left_and_right_alu(self, signals):
         # Чтение регистров, которые подаются на левый вход АЛУ
         alu_left = 0
         if Signals.REGRDDST in signals:
@@ -133,8 +137,9 @@ class DataPath:
             alu_right = self.ip
         if Signals.ARGBUFRD in signals:
             alu_right = self.ab
+        return alu_left, alu_right
 
-        # АЛУ - вычисление результата will throw exception if command +/- non zero number
+    def do_alu_math(self, signals, alu_left, alu_right):
         if not isinstance(alu_right, int) and alu_left == 0:
             res = alu_right.copy()
             if "value" in res:  # превращаем {"value": 123} в 123
@@ -150,8 +155,9 @@ class DataPath:
 
         if isinstance(res, int) and Signals.SHB in signals:
             res = res << 8
+        return res
 
-        # Запись в регистры
+    def write_to_registers(self, signals, res):
         if Signals.ARWR in signals:
             if isinstance(res, int):
                 self.ar = res % (2**self.address_size)
@@ -174,7 +180,7 @@ class DataPath:
         if Signals.REGWR in signals:
             self.write_reg(self.cr["dest_reg"], res)
 
-        # Работа с памятью
+    def memory_read_or_write(self, signals, res, memory):
         if Signals.DRWR in signals:
             if Signals.MEMRD in signals:
                 if isinstance(memory[self.ar], int):
@@ -189,12 +195,19 @@ class DataPath:
             else:
                 memory[self.ar] = self.dr.copy()
 
+    def simulate_tick(self, memory, signals):
+        self.do_io(signals)
+        alu_left, alu_right = self.read_left_and_right_alu(signals)
+        res = self.do_alu_math(signals, alu_left, alu_right)
+        self.write_to_registers(signals, res)
+        self.memory_read_or_write(signals, res, memory)
+
 
 class ControlUnit:
     data_path = None
     micro = None
     memory = None
-    signals_from_micro = {}
+    signals_from_micro = None
 
     _tick = 0
 
