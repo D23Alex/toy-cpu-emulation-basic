@@ -4,8 +4,7 @@ import logging
 import sys
 
 from isa import read_code
-from micro import Signals
-from micro import Micro
+from micro import Micro, Signals
 
 
 class DataPath:
@@ -203,6 +202,7 @@ class ControlUnit:
         self.data_path = data_path
         self.micro = micro
         self.memory = memory
+        self.signals_from_micro = {}
 
     def tick(self):
         self._tick += 1
@@ -220,7 +220,7 @@ class ControlUnit:
         self.tick()
 
     def __repr__(self):
-        state_repr = "TICK: {} IP: {} DR: {} CR: {} ARG_BUF: {} a: {} b: {} c: {} d: {} DST_BUF: {} AR: {}".format(
+        return "TICK: {} IP: {} DR: {} CR: {} ARG_BUF: {} a: {} b: {} c: {} d: {} DST_BUF: {} AR: {}".format(
             self._tick,
             self.data_path.ip,
             self.data_path.dr,
@@ -233,7 +233,6 @@ class ControlUnit:
             self.data_path.db,
             self.data_path.ar,
         )
-        return state_repr
 
 
 def simulation(code, input_tokens, memory_size, limit):

@@ -1,5 +1,6 @@
 import functools
 from enum import Enum
+from typing import ClassVar
 
 
 class Signals(str, Enum):
@@ -50,7 +51,7 @@ class Micro:
             self.mc_pointer = self.mc_pointer_by_label(current_mc["goto"])
         return {}
 
-    commands = [
+    commands: ClassVar = [
         {"label": "INFETCH", "control_flow": False, "signals": {Signals.IPRD, Signals.ARWR}},
         {"control_flow": False, "signals": {Signals.MEMRD, Signals.DRWR, Signals.IPRD, Signals.LINC, Signals.IPWR}},
         {"control_flow": False, "signals": {Signals.DRRD, Signals.CRWR}},

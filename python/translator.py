@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 """Транслятор в машинный код."""
 
+import re
 import shlex
 import sys
-import re
+
 from isa import Opcode, write_code
 
 memory = []
@@ -13,19 +14,13 @@ no_arg_instructions = {"hlt", "in", "out"}
 branching_instructions = {"jmp", "jz"}
 two_arg_instructions = {"add", "mov", "cmp", "shb"}
 
-register_code_by_name = {"a": 0b00, "b": 0b01, "c": 0b10, "d": 0b11}
+registers = {"a", "b", "c", "d"}
 
 start_label = "start"
 
 
-some_text = """
-
-label: 'abc' 'def' 123; comment ;comment
-jmp label ; comment
-cmp [label] b
-add [label] a
-
-"""
+class TranslatorException(Exception):
+    pass
 
 
 def symbol2opcode(symbol):
@@ -58,8 +53,8 @@ def convert_to_int_if_int(string):
 
 def process_label(line):
     if re.fullmatch("[a-z]+:", line[0]):
-        if line[0] in register_code_by_name:
-            raise Exception("label == reg name")  # label == reg name
+        if line[0] in registers:
+            raise TranslatorException("label == reg name")  # label == reg name
         label_mapping[line[0][0:-1]] = len(memory)
         line.pop(0)
         return True
@@ -68,7 +63,6 @@ def process_label(line):
 
 def is_indirect(arg):
     return arg[0] == "[" and arg[-1] == "]"
-    # or arg not in register_code_by_name and type(convert_to_int_if_int(arg)) is not int
 
 
 def extract_from_brackets(arg):
@@ -80,7 +74,7 @@ def extract_from_brackets(arg):
 def place_instruction(line):
     if line[0] in no_arg_instructions:
         if len(line) > 1:
-            raise Exception("arity in a no arg instruction")  # Arity
+            raise TranslatorException("arity in a no arg instruction")
         no_arg_flags = ["noArg"]
         if line[0] != "hlt":
             no_arg_flags.append("io")
@@ -91,7 +85,7 @@ def place_instruction(line):
         )
     elif line[0] in branching_instructions:
         if len(line) != 2:
-            raise Exception("arity in a branching instruction")  # Arity
+            raise TranslatorException("arity in a branching instruction")
         branch_flags = ["branch"]
         if line[0] == "jmp":
             branch_flags.append("jmp")
@@ -106,17 +100,17 @@ def place_instruction(line):
         )
     elif line[0] in two_arg_instructions:
         if len(line) != 3:
-            raise Exception("arity in a two arg instruction")  # Arity
+            raise TranslatorException("arity in a two arg instruction")
 
         dest, arg = line[1], line[2]
         dest_indirect = is_indirect(dest)
         arg_indirect = is_indirect(arg)
         dest, arg = extract_from_brackets(dest), extract_from_brackets(arg)
-        dest_is_register, arg_is_register = dest in register_code_by_name, arg in register_code_by_name
+        dest_is_register, arg_is_register = dest in registers, arg in registers
         dest, arg = convert_to_int_if_int(dest), convert_to_int_if_int(arg)
 
         if not is_indirect(dest) and isinstance(dest, int):
-            raise Exception("add 1, smth")  # add 1, smth
+            raise TranslatorException("add 1, smth")
 
         two_arg_flags = ["twoArg"]
         command = {
@@ -152,12 +146,12 @@ def place_instruction(line):
         if line[0] == "cmp":
             two_arg_flags.append("cmp")
     else:
-        raise Exception("unknown")  # Unknown
+        raise TranslatorException("unknown")
 
 
 def place_int(n):
     if n > 2147483647 or n < -2147483648:
-        raise Exception("int oub")  # int oub
+        raise TranslatorException("int oub")
     memory.append({"value": n})
 
 
@@ -177,7 +171,7 @@ def place_string(string):
 
 def place_data(line):
     if len(line) == 0:
-        raise Exception("no data")  # нет данных
+        raise TranslatorException("no data")
     for term in line:
         if term[0] == "w" and isinstance(convert_to_int_if_int(term[1:]), int):
             for i in range(convert_to_int_if_int(term[1:])):
@@ -187,7 +181,7 @@ def place_data(line):
         elif term[0] == "'" and term[-1] == "'":
             place_string(term[1:-1])
         else:
-            raise Exception("some wrong with data")  # что-то не так в данных
+            raise TranslatorException("some wrong with data")
 
 
 def translate(text):
@@ -209,19 +203,16 @@ def translate(text):
         if is_instruction:
             place_instruction(line)
         elif not starts_with_label:
-            raise Exception("data without label")  # ошибка - данные без метки
+            raise TranslatorException("data without label")  # ошибка - данные без метки
         else:
             place_data(line)
 
     for word in memory:
         for keyword in {"value", "address"}:
             if keyword in word and isinstance(word[keyword], str):
-                # if word[keyword] in register_code_by_name:
-                # word[keyword] = register_code_by_name[word[keyword]]
-                # continue
-                if word[keyword] not in label_mapping and word[keyword] not in register_code_by_name:
-                    raise Exception("undeclared label", word[keyword])
-                if word[keyword] not in register_code_by_name:
+                if word[keyword] not in label_mapping and word[keyword] not in registers:
+                    raise TranslatorException("undeclared label", word[keyword])
+                if word[keyword] not in registers:
                     word[keyword] = label_mapping[word[keyword]]
     return memory
 
