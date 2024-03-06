@@ -34,37 +34,37 @@ class Signals(str, Enum):
 
 class Micro:
     """
-                         signals
-                             ▲
-                             │
-                    ┌────────┴───────────┐
-                    │MUX(0 if not cf)    │
-                    └────────────────────┘
-                    ▲           ▲  ▲  ▲
-                    │           │  │  │
-                  (neg)         │  │  │
-                    ┼           signals
-                control_flow?   │  │  │
-                    │ ┌─────────┴──┴──┴──┐
-        ┌───────┬───┼─┤  micro_command   │
-        │       │   │ └────────────────┬─┘◄──────────────┐
-        │ check_bit │                  │                 │
-        │       │   └─control_flow?──┐ │                 │
-        │       ▼                    │ └─────┐           │
-        │    ┌─────────┐             │       │           │
-        │    │decoder  │             │    goto_addr     ┌┴─────┐
-        │    └──┬──────┘             │       │          │MC_MEM│
-        │       │                    │       │  ┌─────┐ │      │
- zero_required? ▼                    ▼       ▼  ▼     │ │      │
-        │      (xor)──►(non_zero)─►(and)─►┌───────┐   │ │      │
-        │       ▲                    ▲    │ MUX   │ (+1)└──────┘
-  read_mcg)     │                    │    └┬──────┘   │    ▲  ▲
-        │     command_reg            │     │          └──┐ │  │
-        │                            │     └─►┌──────┐   │ │  │
-Z─────►(or)──────────────────────────┘        │mc_ptr├───┴─┘  │
-                            latch_mc_ptr─────►└──────┘        │
-                                                              │
-                                 read_mc──────────────────────┘
+                             signals
+                                 ▲
+                                 │
+                        ┌────────┴───────────┐
+                        │MUX(0 if not cf)    │
+                        └────────────────────┘
+                        ▲           ▲  ▲  ▲
+                        │           │  │  │
+                      (neg)         │  │  │
+                        ┼           signals
+                    control_flow?   │  │  │
+                        │ ┌─────────┴──┴──┴──┐
+            ┌───────┬───┼─┤  micro_command   │
+            │       │   │ └────────────────┬─┘◄──────────────┐
+            │ check_bit │                  │                 │
+            │       │   └─control_flow?──┐ │                 │
+            │       ▼                    │ └─────┐           │
+            │    ┌─────────┐             │       │           │
+            │    │decoder  │             │    goto_addr     ┌┴─────┐
+            │    └──┬──────┘             │       │          │MC_MEM│
+            │       │                    │       │  ┌─────┐ │      │
+     zero_required? ▼                    ▼       ▼  ▼     │ │      │
+            │      (xor)──►(non_zero)─►(and)─►┌───────┐   │ │      │
+            │       ▲                    ▲    │ MUX   │ (+1)└──────┘
+      read_mcg)     │                    │    └┬──────┘   │    ▲  ▲
+            │     command_reg            │     │          └──┐ │  │
+            │                            │     └─►┌──────┐   │ │  │
+    Z─────►(or)──────────────────────────┘        │mc_ptr├───┴─┘  │
+                                latch_mc_ptr─────►└──────┘        │
+                                                                  │
+                                     read_mc──────────────────────┘
     """
 
     mc_pointer = 0
@@ -84,9 +84,11 @@ Z─────►(or)───────────────────
 
     def simulate_tick_and_return_signals(self, cr, zero_flag):
         current_mc = self.read_mc()
-        if current_mc["control_flow"]\
-                and current_mc["check"] in cr["flags"]\
-                and (zero_flag or not current_mc["zero_flag_required"]):
+        if (
+            current_mc["control_flow"]
+            and current_mc["check"] in cr["flags"]
+            and (zero_flag or not current_mc["zero_flag_required"])
+        ):
             self.latch_mc_ptr(self.mc_pointer_by_label(current_mc["goto"]))
         else:
             self.latch_mc_ptr(self.mc_pointer + 1)
