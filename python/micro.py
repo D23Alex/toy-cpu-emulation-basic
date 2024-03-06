@@ -33,6 +33,40 @@ class Signals(str, Enum):
 
 
 class Micro:
+    """
+                         signals
+                             ▲
+                             │
+                    ┌────────┴───────────┐
+                    │MUX(0 if not cf)    │
+                    └────────────────────┘
+                    ▲           ▲  ▲  ▲
+                    │           │  │  │
+                  (neg)         │  │  │
+                    ┼           signals
+                control_flow?   │  │  │
+                    │ ┌─────────┴──┴──┴──┐
+        ┌───────┬───┼─┤  micro_command   │
+        │       │   │ └────────────────┬─┘◄──────────────┐
+        │ check_bit │                  │                 │
+        │       │   └─control_flow?──┐ │                 │
+        │       ▼                    │ └─────┐           │
+        │    ┌─────────┐             │       │           │
+        │    │decoder  │             │    goto_addr     ┌┴─────┐
+        │    └──┬──────┘             │       │          │MC_MEM│
+        │       │                    │       │  ┌─────┐ │      │
+ zero_required? ▼                    ▼       ▼  ▼     │ │      │
+        │      (xor)──►(non_zero)─►(and)─►┌───────┐   │ │      │
+        │       ▲                    ▲    │ MUX   │ (+1)└──────┘
+  read_mcg)     │                    │    └┬──────┘   │    ▲  ▲
+        │     command_reg            │     │          └──┐ │  │
+        │                            │     └─►┌──────┐   │ │  │
+Z─────►(or)──────────────────────────┘        │mc_ptr├───┴─┘  │
+                            latch_mc_ptr─────►└──────┘        │
+                                                              │
+                                 read_mc──────────────────────┘
+    """
+
     mc_pointer = 0
 
     @functools.cache
@@ -42,13 +76,23 @@ class Micro:
                 return i
         return -1
 
+    def read_mc(self):
+        return self.commands[self.mc_pointer]
+
+    def latch_mc_ptr(self, new_mc_value):
+        self.mc_pointer = new_mc_value
+
     def simulate_tick_and_return_signals(self, cr, zero_flag):
-        current_mc = self.commands[self.mc_pointer]
-        self.mc_pointer += 1
+        current_mc = self.read_mc()
+        if current_mc["control_flow"]\
+                and current_mc["check"] in cr["flags"]\
+                and (zero_flag or not current_mc["zero_flag_required"]):
+            self.latch_mc_ptr(self.mc_pointer_by_label(current_mc["goto"]))
+        else:
+            self.latch_mc_ptr(self.mc_pointer + 1)
+
         if not current_mc["control_flow"]:
             return current_mc["signals"]
-        if current_mc["check"] in cr["flags"] and (zero_flag or not current_mc["zero_flag_required"]):
-            self.mc_pointer = self.mc_pointer_by_label(current_mc["goto"])
         return {}
 
     commands: ClassVar = [
