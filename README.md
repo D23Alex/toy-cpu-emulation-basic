@@ -980,8 +980,8 @@ golden_asm_test.py::test_translator_asm_and_machine[golden/hello_world_asm.yml] 
 ```
 
 ```text
-| ФИО                          | алг             | LoC | code байт | code инстр. | инстр. | такт. | вариант                                                                         |
-| Дорморезов Алексей Сергеевич | hello           | 18  | -         | 28          | 130    | 1948  | asm | cisc | neum | mc | tick | struct | stream | port | pstr | prob1 | [4]char |
-| Дорморезов Алексей Сергеевич | cat             | 9   | -         | 12          | 32     | 430   | asm | cisc | neum | mc | tick | struct | stream | port | pstr | prob1 | [4]char |
-| Дорморезов Алексей Сергеевич | hello_user_name | 114 | -         | 149         | 436    | 6693  | asm | cisc | neum | mc | tick | struct | stream | port | pstr | prob1 | [4]char |
+| ФИО                          | алг             | LoC | code байт | code инстр. | инстр. | такт. | вариант                                                               |
+| Дорморезов Алексей Сергеевич | hello           | 11  | -         | 12          | 83     | 1252  | asm | cisc | neum | mc | tick | struct | stream | port | pstr | prob1 |
+| Дорморезов Алексей Сергеевич | cat             | 6   | -         | 8           | 20     | 214   | asm | cisc | neum | mc | tick | struct | stream | port | pstr | prob1 |
+| Дорморезов Алексей Сергеевич | hello_user_name | 40  | -         | 33          | 236    | 3596  | asm | cisc | neum | mc | tick | struct | stream | port | pstr | prob1 |
 ```

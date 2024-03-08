@@ -96,13 +96,12 @@ class DataPath:
     def do_io(self, signals):
         if Signals.OUT in signals:
             self.d &= 0xFFFFFFFF
-            high_byte = (self.d >> 24) & 0xFF
-            if high_byte > 126 or (high_byte < 32 and high_byte != 10):
-                high_byte_char = "\\x{:02x}".format(high_byte)
-            else:
-                high_byte_char = chr(high_byte)
-            logging.debug("output: %s << %s", repr("".join(self.output_buffer)), repr(high_byte_char))
-            self.output_buffer.append(high_byte_char)
+            low_byte = self.d % (2**8)
+            low_byte_char = chr(low_byte)
+            if low_byte > 126 or (low_byte < 32 and low_byte != 10):
+                low_byte_char = "\\x{:02x}".format(low_byte)
+            logging.debug("output: %s << %s", repr("".join(self.output_buffer)), repr(low_byte_char))
+            self.output_buffer.append(low_byte_char)
         if Signals.IN in signals:
             symbol_code = 0
             try:
@@ -141,16 +140,19 @@ class DataPath:
             if "value" in res:  # превращаем {"value": 123} в 123
                 res = res["value"]
         elif Signals.ALUSUB in signals:
-            res = alu_left - alu_right
+            res = (alu_left - alu_right) & 0xFFFFFFFF
             if Signals.SETZ in signals:
                 self.zero = res == 0
         else:
-            res = alu_left + alu_right
+            res = (alu_left + alu_right) & 0xFFFFFFFF
             if Signals.SETZ in signals:
                 self.zero = res == 0
 
         if isinstance(res, int) and Signals.SHB in signals:
+            high_byte = (res >> 24) & 0xFF
             res = res << 8
+            res += high_byte
+            res &= 0xFFFFFFFF
         return res
 
     def write_to_registers(self, signals, res):

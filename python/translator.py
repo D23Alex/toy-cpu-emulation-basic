@@ -168,17 +168,9 @@ def place_int(n):
 
 
 def place_string(string):
-    current_word = 0
     memory.append({"value": len(string)})
-    chars_placed = 0
     for char in string:
-        current_word += ord(char) << 8 * (3 - (chars_placed % 4))
-        chars_placed += 1
-        if chars_placed % 4 == 0:
-            memory.append({"value": current_word})
-            current_word = 0
-    if chars_placed % 4 != 0:
-        memory.append({"value": current_word})
+        memory.append({"value": ord(char)})
 
 
 def place_data(line):
@@ -237,10 +229,12 @@ def main(source, target):
     with open(source, encoding="utf-8") as f:
         source = f.read()
 
-    code = translate(source)
-
-    write_code(target, code)
-    print("source LoC:", len(source.split("\n")), "machine words:", len(code))
+    try:
+        code = translate(source)
+        write_code(target, code)
+        print("source LoC:", len(source.split("\n")), "machine words:", len(code))
+    except TranslatorError as e:
+        print("failed to compile - ", repr(e))
 
 
 if __name__ == "__main__":
