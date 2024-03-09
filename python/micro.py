@@ -43,7 +43,7 @@ class Micro:
                         ▲           ▲  ▲  ▲
                         │           │  │  │
                       (neg)         │  │  │
-                        ┼           signals
+                        │           signals
                     control_flow?   │  │  │
                         │ ┌─────────┴──┴──┴──┐
             ┌───────┬───┼─┤  micro_command   │
