@@ -210,7 +210,7 @@ class ControlUnit:
     │ │                 │ microcode    │◄─────┐
     │ │ latch_mc_ptr───►│              │      │
     │ │                 │              │◄──┐  │
-    │ │             ───►└─────┬────────┘   │  │
+    │ │      read_mc───►└─────┬────────┘   │  │
     │ │                       │            │  │
     │ │                    signals         │  │
     │ │                       │           CR  │
